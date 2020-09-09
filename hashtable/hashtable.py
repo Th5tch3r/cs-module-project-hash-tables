@@ -23,7 +23,10 @@ class HashTable:
     def __init__(self, capacity):
         # Your code here
         self.capacity = capacity
-        self.data = [None] * capacity
+        if capacity < MIN_CAPACITY:
+            self.capacity = MIN_CAPACITY
+        self.storage = [None] * capacity
+        self.count = 0
 
 
     def get_num_slots(self):
@@ -36,7 +39,7 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        return self.capacity
 
 
     def get_load_factor(self):
@@ -45,18 +48,7 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-
-
-    def fnv1(self, key):
-        """
-        FNV-1 Hash, 64-bit
-
-        Implement this, and/or DJB2.
-        """
-
-        # Your code here
-
+        return self.count / self.capacity
 
     def djb2(self, key):
         """
@@ -66,8 +58,8 @@ class HashTable:
         """
         # Your code here
         hash = 5381
-        for c in key:
-            hash = (hash * 33) + ord(c)
+        for item in key:
+            hash = (hash * 33) + ord(item)
         return hash
 
 
@@ -87,9 +79,18 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        # Store value with given key
         index = self.hash_index(key)
-        self.data[index] = value
+        hash_entry = HashTableEntry(key, value)
+        storage = self.storage[index]
+        self.count += 1
+
+        # Hash collisions => linked list chaining
+        if storage:
+            self.storage[index] = hash_entry
+            self.storage[index].next = storage
+        else:
+            self.storage[index] = hash_entry
 
 
     def delete(self, key):
@@ -100,10 +101,12 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-        index = self.hash_index(key)
-        value = self.data[index] = None
-        return value
+        # Remove value stored through the key
+        if self.get(key):
+            self.put(key, None)
+            self.count -= 1
+        else:
+            print("Key was not found")
 
 
     def get(self, key):
@@ -114,11 +117,16 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        # get the value stored with the key.
         index = self.hash_index(key)
-        value = self.data[index]
-        return value
-
+        
+        storage = self.storage[index]
+        while storage:
+            if storage.key == key:
+                return storage.value
+            storage = storage.next
+        # key was not found
+        return None
 
     def resize(self, new_capacity):
         """
@@ -127,7 +135,20 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        
+        load = self.get_load_factor()
+
+        if load > 0.7:
+            new_table = [None] * (new_capacity)
+            old_table = self.storage
+            self.storage = new_table
+            self.capacity = new_capacity
+            for element in old_table:
+                current = element
+                # we want to put the element into the new_table
+                while current is not None:
+                    self.put(current.key, current.value)
+                    current = current.next
 
 
 
